@@ -98,9 +98,9 @@ mod tests {
         
 
         for value in 1..=TOP {
-            let before: Vec<Option<u8>> = (value..=TOP).map(|v| Some(v)).collect();
-            let after: Vec<Option<u8>> = ((value + 1)..=TOP).map(|v| Some(v)).collect();
-            for loc in (1..=TOP) {
+            let before: Vec<Option<u8>> = (1..=TOP).map(|v| if v < value { None } else { Some(v) }).collect();
+            let after: Vec<Option<u8>> = (1..=TOP).map(|v| if v > value { Some(v) } else { None }).collect();
+            for loc in 1..=TOP {
                 assert_eq!(temp.available_values(loc), before);
                 temp.set(loc, value);
                 assert_eq!(temp.available_values(loc), after);
