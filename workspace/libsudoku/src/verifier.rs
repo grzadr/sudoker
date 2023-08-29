@@ -180,7 +180,4 @@ mod tests {
 
         assert!(temp.is_solved())
     }
-
-    
-
 }
