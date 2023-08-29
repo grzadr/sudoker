@@ -1,0 +1,12 @@
+[package]
+name = "workspace"
+version = "0.1.0"
+edition = "2021"
+authors = ["Adrian Grzemski <adrian.grzemski@gmail.com>"]
+description = "Workspace for sudoker project"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = [
+    "libsudoku",
+]
+[dependencies]
