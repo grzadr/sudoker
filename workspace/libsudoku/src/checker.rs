@@ -19,7 +19,7 @@ impl ValChecker {
     }
 
     pub fn is_solved(&self) -> bool {
-        self.values.iter().flatten().all(|x| *x == true)
+        self.values.iter().flatten().all(|x| *x)
     }
 
     pub fn available_values(&self, loc: u8) -> Vec<Option<u8>> {

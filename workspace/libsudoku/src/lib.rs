@@ -3,62 +3,10 @@ use std::ops::Deref;
 use serde_json::Value;
 pub mod loc;
 mod checker;
+mod verifier;
 use loc::Loc;
-use checker::ValChecker;
+use verifier::Verifier;
 
-#[derive(Debug, PartialEq, Clone)]
-struct Verifier {
-    size: u8,
-    rows: ValChecker,
-    cols: ValChecker,
-    sqrs: ValChecker,
-}
-
-impl Verifier {
-    pub fn new(size: u8) -> Self {
-        let top = size.pow(2);
-        Self {
-            size,
-            rows: ValChecker::new(top),
-            cols: ValChecker::new(top),
-            sqrs: ValChecker::new(top),
-        }
-    }
-
-    pub fn set(&mut self, loc: &Loc, val: u8) {
-        self.rows.set(loc.row, val);
-        self.cols.set(loc.col, val);
-        self.sqrs.set(loc.sqr(self.size), val);
-    }
-
-    pub fn unset(&mut self, loc: &Loc, val: u8) {
-        self.rows.unset(loc.row, val);
-        self.cols.unset(loc.col, val);
-        self.sqrs.unset(loc.sqr(self.size), val);
-    }
-
-    pub fn is_solved(&self) -> bool {
-        self.rows.is_solved() && self.cols.is_solved() && self.sqrs.is_solved()
-    }
-
-    pub fn available_values(&self, loc: &Loc) -> Vec<u8> {
-        let rows = self.rows.available_values(loc.row);
-        let cols = self.cols.available_values(loc.col);
-        let sqrs = self.sqrs.available_values(loc.sqr(self.size));
-
-        rows.iter()
-            .zip(cols.iter())
-            .zip(sqrs.iter())
-            .filter_map(|((r, c), s)| {
-                if r.is_some() && c.is_some() && s.is_some() {
-                    *Some(r).unwrap()
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
-}
 
 impl From<(u8, &BoardMap)> for Verifier {
     fn from(other: (u8, &BoardMap)) -> Self {
@@ -116,7 +64,7 @@ impl Board {
     }
 
     pub fn is_solved(&self) -> bool {
-        return self.verification.is_solved();
+        self.verification.is_solved()
     }
 
     pub fn get_str(&self, loc: &Loc) -> String {
@@ -209,7 +157,7 @@ impl Board {
     }
 
     pub fn try_set(&mut self, loc: &Loc, value: Option<u8>) -> Result<(), String> {
-        if value.is_some() && !self.available_values(&loc).contains(&value.unwrap()) {
+        if value.is_some() && !self.available_values(loc).contains(&value.unwrap()) {
             return Err(format!(
                 "'{}' cannot be inserted in {:?}",
                 value.unwrap(),
@@ -217,7 +165,7 @@ impl Board {
             ));
         }
 
-        self.set(&loc, value);
+        self.set(loc, value);
         Ok(())
     }
 
@@ -229,12 +177,12 @@ impl Board {
         let loc = &locs[0];
         let rest = &locs[1..];
 
-        for value in self.available_values(&loc) {
-            self.set(&loc, Some(value));
-            if self.try_to_solve(&rest) {
+        for value in self.available_values(loc) {
+            self.set(loc, Some(value));
+            if self.try_to_solve(rest) {
                 return true;
             }
-            self.set(&loc, None);
+            self.set(loc, None);
         }
 
         false
@@ -289,7 +237,7 @@ impl From<(u8, BoardMap)> for Board {
             values.len(),
             expected_len
         );
-        let mut keys: Vec<Loc> = values.keys().map(|m| *m).collect();
+        let mut keys: Vec<Loc> = values.keys().copied().collect();
         keys.sort();
 
         assert!(keys.into_iter().eq(Board::gen_all_locs(top)));
